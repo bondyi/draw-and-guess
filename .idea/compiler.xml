@@ -9,5 +9,8 @@
         <module name="drawandguess" />
       </profile>
     </annotationProcessing>
+    <bytecodeTargetLevel>
+      <module name="draw-and-guess" target="18" />
+    </bytecodeTargetLevel>
   </component>
 </project>

@@ -72,6 +72,7 @@ public class ClientView extends JFrame {
 
         lbGameStatus.setText("CONNECTING...");
         lbGameStatus.setHorizontalAlignment(SwingConstants.CENTER);
+        lbGameStatus.setFont(tpChatLog.getFont().deriveFont(18F));
         this.add(lbGameStatus, BorderLayout.PAGE_START);
     }
 

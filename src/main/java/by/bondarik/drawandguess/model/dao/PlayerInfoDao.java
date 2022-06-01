@@ -9,7 +9,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
-public class PlayerInfoDao implements BaseDao {
+public class PlayerInfoDao {
     private static final String PATH = new File("target/classes/data/players.txt").getAbsolutePath();
 
     private PlayerInfoDao() {}

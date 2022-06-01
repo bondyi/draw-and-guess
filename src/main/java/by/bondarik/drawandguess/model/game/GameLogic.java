@@ -14,11 +14,13 @@ public class GameLogic {
     private boolean isWaitingForPlayers;
 
     private final ArrayList<Player> players;
+    private int currentDrawer;
     private final ArrayList<Player> playersGuessedCorrect;
 
     private final ArrayList<String> words;
     private ArrayList<String> wordsPool;
     private String currentWord;
+    private int countRounds;
 
     public GameLogic() {
         this.isWaitingForPlayers = true;
@@ -27,6 +29,7 @@ public class GameLogic {
         this.words = new ArrayList<>(WordDao.getWords());
         this.wordsPool = new ArrayList<>(this.words);
         Collections.shuffle(this.wordsPool);
+        this.countRounds = 0;
     }
 
     public boolean isWaitingForPlayers() {
@@ -58,15 +61,12 @@ public class GameLogic {
 
     public boolean addPlayer(Player player) {
         players.add(player);
-
-        if (isWaitingForPlayers) {
-            if (players.size() >= MINIMUM_PLAYERS) {
-                isWaitingForPlayers = false;
-                return true;
-            }
+        if (isWaitingForPlayers && players.size() >= MINIMUM_PLAYERS) {
+            isWaitingForPlayers = false;
+            return true;
+        } else if (!isWaitingForPlayers) {
+            player.setGuessing(true);
         }
-        else player.setGuessing(true);
-
         return false;
     }
 
@@ -90,8 +90,9 @@ public class GameLogic {
     }
 
     public Player newRound(boolean isFirst) {
+        countRounds++;
         players.forEach(p -> p.setGuessing(true));
-        if (!isFirst) Collections.rotate(players, -1);
+        if (!isFirst) Collections.rotate(players, 1);
         players.get(0).setDrawing(true);
         players.get(0).setGuessing(false);
         newWord();

@@ -146,7 +146,6 @@ public class Client {
                     }
                 }
             } catch (IOException | ClassNotFoundException e) {
-                view.createMessageDialog("Communication error.");
                 close();
             }
         }

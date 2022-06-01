@@ -5,7 +5,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-public class WordDao implements BaseDao {
+public class WordDao {
     private static final String PATH = new File("target/classes/data/words.txt").getAbsolutePath();
 
     private WordDao() {}

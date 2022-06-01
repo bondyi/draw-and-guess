@@ -7,11 +7,11 @@ import java.awt.*;
 import java.awt.event.*;
 
 public class ServerView extends JFrame{
-    private final Server server;
+    private static Server server;
     private final JTextArea dialogWindow;
 
     public ServerView(Server server) {
-        this.server = server;
+        ServerView.server = server;
         dialogWindow = new JTextArea(10, 40);
     }
 
@@ -26,7 +26,7 @@ public class ServerView extends JFrame{
         this.pack();
 
         this.setLocationRelativeTo(null);
-        this.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
+        this.setDefaultCloseOperation(DO_NOTHING_ON_CLOSE);
 
         this.addWindowListener(new WindowAdapter() {
             @Override

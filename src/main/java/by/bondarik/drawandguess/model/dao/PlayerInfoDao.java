@@ -6,15 +6,18 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 
-public class PlayerContextDao extends BaseDao {
+public class PlayerInfoDao implements BaseDao {
     private static final String PATH = new File("target/classes/data/players.txt").getAbsolutePath();
 
-    public static ArrayList<PlayerInfo> getContexts() {
+    private PlayerInfoDao() {}
+
+    public static List<PlayerInfo> getContexts() {
         ArrayList<PlayerInfo> contexts = new ArrayList<>();
 
-        String[] playerContexts = getData(PATH).split("\\r?\\n");
+        String[] playerContexts = BaseDao.getData(PATH).split("\\r?\\n");
 
         for (String playerContext : playerContexts) {
             String[] currentContext = playerContext.split(" ");
@@ -25,7 +28,7 @@ public class PlayerContextDao extends BaseDao {
     }
 
     public static PlayerInfo getContext(String playerName) {
-        ArrayList<PlayerInfo> contexts = getContexts();
+        ArrayList<PlayerInfo> contexts = (ArrayList<PlayerInfo>) getContexts();
 
         if (contexts != null) {
             for (PlayerInfo context : contexts) {
@@ -37,7 +40,7 @@ public class PlayerContextDao extends BaseDao {
     }
 
     public static boolean add(PlayerInfo newContext) throws IOException {
-        ArrayList<PlayerInfo> contexts = getContexts();
+        ArrayList<PlayerInfo> contexts = (ArrayList<PlayerInfo>) getContexts();
 
         if (contexts != null) {
             for (PlayerInfo context : contexts) {
@@ -51,11 +54,11 @@ public class PlayerContextDao extends BaseDao {
         return true;
     }
 
-    public static void saveData(ArrayList<PlayerInfo> playerInfos) throws IOException {
-        FileWriter fileWriter = new FileWriter(PATH, false);
-        for (PlayerInfo context : playerInfos) {
-            fileWriter.write(context.toString() + '\n');
+    public static void saveData(List<PlayerInfo> playerInfos) throws IOException {
+        try (FileWriter fileWriter = new FileWriter(PATH, false)) {
+            for (PlayerInfo context : playerInfos) {
+                fileWriter.write(context.toString() + '\n');
+            }
         }
-        fileWriter.close();
     }
 }

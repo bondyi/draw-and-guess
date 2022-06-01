@@ -5,6 +5,7 @@ import by.bondarik.drawandguess.model.network.MessageType;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 import java.util.Objects;
 
 public class GameLogic {
@@ -36,7 +37,7 @@ public class GameLogic {
         isWaitingForPlayers = waitingForPlayers;
     }
 
-    public ArrayList<Player> getPlayers() {
+    public List<Player> getPlayers() {
         return players;
     }
 

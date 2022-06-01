@@ -27,10 +27,6 @@ public class TCPConnection implements Closeable {
         return socket;
     }
 
-    public boolean isActive() {
-        return socket.isConnected();
-    }
-
     public void send(Message message) throws IOException {
         synchronized (this.out) {
             out.writeObject(message);

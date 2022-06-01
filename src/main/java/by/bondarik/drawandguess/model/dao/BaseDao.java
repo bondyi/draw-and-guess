@@ -3,7 +3,7 @@ package by.bondarik.drawandguess.model.dao;
 import java.io.FileReader;
 import java.io.IOException;
 
-public abstract class BaseDao {
+public interface BaseDao {
     public static String getData(String path) {
         StringBuilder stringBuilder = new StringBuilder();
 
@@ -13,7 +13,7 @@ public abstract class BaseDao {
                 stringBuilder.append((char)symbol);
             }
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            e.printStackTrace();
         }
 
         return stringBuilder.toString();

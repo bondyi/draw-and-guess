@@ -1,6 +1,6 @@
 package by.bondarik.drawandguess.model.server;
 
-import by.bondarik.drawandguess.model.dao.PlayerContextDao;
+import by.bondarik.drawandguess.model.dao.PlayerInfoDao;
 import by.bondarik.drawandguess.model.game.GameLogic;
 import by.bondarik.drawandguess.model.game.Player;
 import by.bondarik.drawandguess.model.game.PlayerInfo;
@@ -73,69 +73,6 @@ public class Server implements Closeable {
         }
     }
 
-    private void sendCorrectGameState(ServerThread thread, boolean sendCanvas) throws IOException {
-        StringBuilder stringBuilder = new StringBuilder();
-
-        if (thread.player.isGuessing()) stringBuilder.append("GUESSING");
-        else if (thread.player.isDrawing()) stringBuilder.append("DRAWING-").append(gameLogic.getCurrentWord());
-        else if (gameLogic.hasGuessedCorrect(thread.player)) stringBuilder.append("CORRECT");
-        else stringBuilder.append("WAITING");
-
-        thread.connection.send(new Message(MessageType.CORRECT_GAME_STATE, stringBuilder.toString()));
-
-        if (sendCanvas && !drawingPoints.isEmpty()) {
-            for (Point point : drawingPoints) {
-                thread.connection.send(new Message(MessageType.POINT, point.x + ";" + point.y));
-            }
-        }
-    }
-
-    private boolean finishRound() throws IOException {
-        gameLogic.finishRound();
-
-        String correctWord = gameLogic.getCurrentWord().toUpperCase();
-        view.appendMessage("[GAME] ROUND FINISHED. WORD: " + correctWord);
-
-        broadcastMessage(new Message(MessageType.CHAT, "Round finished. Word: " + correctWord));
-        broadcastScores();
-
-        if (threads.size() < GameLogic.MINIMUM_PLAYERS) {
-            gameLogic.setWaitingForPlayers(true);
-            broadcastMessage(new Message(MessageType.GAME_STATE, "WAITING"));
-            return false;
-        }
-
-        return true;
-    }
-
-    private void newRound(boolean isFirst) throws IOException {
-        Player newDrawer = gameLogic.newRound(isFirst);
-        if (!isFirst) {
-            Collections.rotate(threads, -1);
-        }
-
-        for (ServerThread thread : threads) {
-            if (thread.player.equals(newDrawer)) {
-                thread.connection.send(new Message(MessageType.GAME_STATE, "DRAWING-" + gameLogic.getCurrentWord()));
-            }
-            else thread.connection.send(new Message(MessageType.GAME_STATE, "GUESSING"));
-        }
-
-        broadcastMessage(new Message(MessageType.CHAT, newDrawer.getContext().getName() + " is drawing"));
-        drawingPoints.clear();
-
-        view.appendMessage("[GAME] NEW ROUND. WORD: " + gameLogic.getCurrentWord());
-    }
-
-    private void broadcastScores() throws IOException {
-        ArrayList<Player> sortedPlayers = gameLogic.getPlayers();
-        sortedPlayers.sort((p1, p2) -> p2.getCurrentScore() - p1.getCurrentScore());
-        String scores = sortedPlayers.stream().map(p -> p.getContext().getName() + ": " + p.getCurrentScore())
-                .collect(Collectors.joining(","));
-
-        broadcastMessage(new Message(MessageType.SCORES, scores));
-    }
-
     public void stop() {
         isRunning = false;
     }
@@ -173,11 +110,11 @@ public class Server implements Closeable {
                             continue;
                         }
 
-                        PlayerInfo context = PlayerContextDao.getContext(requestedPlayerName);
+                        PlayerInfo context = PlayerInfoDao.getContext(requestedPlayerName);
 
                         if (context == null) {
                             PlayerInfo newContext = new PlayerInfo(requestedPlayerName);
-                            PlayerContextDao.add(newContext);
+                            PlayerInfoDao.add(newContext);
 
                             connection.send(new Message(MessageType.LOGIN_SUCCESS, requestedPlayerName));
                             broadcastMessage(new Message(MessageType.CHAT, requestedPlayerName + " connected for the first time!"));
@@ -211,21 +148,21 @@ public class Server implements Closeable {
 
                         case GUESS -> {
                             if (gameLogic.isIllegal(player, MessageType.GUESS)) {
-                                sendCorrectGameState(this, true);
+                                sendCorrectGameState(true);
                             }
 
                             if (gameLogic.guessWord(player, message.getData())) {
                                 broadcastMessage(new Message(MessageType.CHAT, player.getContext().getName() + " guessed the word!"));
                                 if (gameLogic.isRoundFinished() && finishRound()) {
                                     newRound(false);
-                                } else sendCorrectGameState(this, false);
+                                } else sendCorrectGameState(false);
                             } else
                                 broadcastMessage(new Message(MessageType.CHAT, player.getContext().getName() + ": " + message.getData()));
                         }
 
                         case POINT -> {
                             if (gameLogic.isIllegal(player, MessageType.POINT)) {
-                                sendCorrectGameState(this, true);
+                                sendCorrectGameState(true);
                             }
 
                             String[] xy = message.getData().split(";");
@@ -272,7 +209,7 @@ public class Server implements Closeable {
                     if (gameLogic.addPlayer(player)) {
                         newRound(true);
                     }
-                    sendCorrectGameState(this, true);
+                    sendCorrectGameState(true);
                     broadcastScores();
                 } catch (IOException e) {
                     view.appendMessage("[ERROR] PLAYER ADD FROM " + connection);
@@ -280,6 +217,69 @@ public class Server implements Closeable {
             }
 
             communication();
+        }
+
+        private void sendCorrectGameState(boolean sendCanvas) throws IOException {
+            StringBuilder stringBuilder = new StringBuilder();
+
+            if (player.isGuessing()) stringBuilder.append("GUESSING");
+            else if (player.isDrawing()) stringBuilder.append("DRAWING-").append(gameLogic.getCurrentWord());
+            else if (gameLogic.hasGuessedCorrect(player)) stringBuilder.append("CORRECT");
+            else stringBuilder.append("WAITING");
+
+            connection.send(new Message(MessageType.CORRECT_GAME_STATE, stringBuilder.toString()));
+
+            if (sendCanvas && !drawingPoints.isEmpty()) {
+                for (Point point : drawingPoints) {
+                    connection.send(new Message(MessageType.POINT, point.x + ";" + point.y));
+                }
+            }
+        }
+
+        private boolean finishRound() throws IOException {
+            gameLogic.finishRound();
+
+            String correctWord = gameLogic.getCurrentWord().toUpperCase();
+            view.appendMessage("[GAME] ROUND FINISHED. WORD: " + correctWord);
+
+            broadcastMessage(new Message(MessageType.CHAT, "Round finished. Word: " + correctWord));
+            broadcastScores();
+
+            if (threads.size() < GameLogic.MINIMUM_PLAYERS) {
+                gameLogic.setWaitingForPlayers(true);
+                broadcastMessage(new Message(MessageType.GAME_STATE, "WAITING"));
+                return false;
+            }
+
+            return true;
+        }
+
+        private void newRound(boolean isFirst) throws IOException {
+            Player newDrawer = gameLogic.newRound(isFirst);
+            if (!isFirst) {
+                Collections.rotate(threads, -1);
+            }
+
+            for (ServerThread thread : threads) {
+                if (thread.player.equals(newDrawer)) {
+                    thread.connection.send(new Message(MessageType.GAME_STATE, "DRAWING-" + gameLogic.getCurrentWord()));
+                }
+                else thread.connection.send(new Message(MessageType.GAME_STATE, "GUESSING"));
+            }
+
+            broadcastMessage(new Message(MessageType.CHAT, newDrawer.getContext().getName() + " is drawing"));
+            drawingPoints.clear();
+
+            view.appendMessage("[GAME] NEW ROUND. WORD: " + gameLogic.getCurrentWord());
+        }
+
+        private void broadcastScores() throws IOException {
+            ArrayList<Player> sortedPlayers = (ArrayList<Player>) gameLogic.getPlayers();
+            sortedPlayers.sort((p1, p2) -> p2.getCurrentScore() - p1.getCurrentScore());
+            String scores = sortedPlayers.stream().map(p -> p.getContext().getName() + ": " + p.getCurrentScore())
+                    .collect(Collectors.joining(","));
+
+            broadcastMessage(new Message(MessageType.SCORES, scores));
         }
     }
 }

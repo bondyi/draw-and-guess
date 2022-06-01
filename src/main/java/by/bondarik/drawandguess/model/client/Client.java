@@ -68,7 +68,7 @@ public class Client {
 
             if (serverPort >= 1024 && serverPort <= 65535) {
 
-                String playerName = view.createInputDialog("Player's name");
+                playerName = view.createInputDialog("Player's name");
 
                 connection = new TCPConnection(serverAddress, serverPort);
 
@@ -186,7 +186,9 @@ public class Client {
         System.exit(0);
     }
 
-    private class PressListener extends MouseAdapter {
+    private class PressListener extends MouseAdapter
+    {
+        @Override
         public void mousePressed(MouseEvent event) {
             if (!isDrawing) return;
 
@@ -201,6 +203,7 @@ public class Client {
     }
 
     private class DragListener extends MouseMotionAdapter {
+        @Override
         public void mouseDragged(MouseEvent event) {
             if (!isDrawing) return;
 

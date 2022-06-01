@@ -40,9 +40,9 @@ public class GameLogic {
         return players;
     }
 
-    public boolean isPlaying(PlayerContext context) {
+    public boolean isPlaying(PlayerInfo context) {
         for (Player player : players) {
-            PlayerContext currentContext = player.getContext();
+            PlayerInfo currentContext = player.getContext();
             if (Objects.equals(currentContext.getName(), context.getName())) {
                 return true;
             }

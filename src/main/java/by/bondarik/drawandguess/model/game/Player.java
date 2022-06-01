@@ -4,14 +4,14 @@ public class Player {
     private static int idCounter = 1;
     private final int id;
 
-    private final PlayerContext context;
+    private final PlayerInfo context;
 
     private boolean isGuessing;
     private boolean isDrawing;
 
     private int currentScore;
 
-    public Player(PlayerContext context) {
+    public Player(PlayerInfo context) {
         this.id = idCounter++;
         this.context = context;
         this.isGuessing = false;
@@ -23,7 +23,7 @@ public class Player {
         return id;
     }
 
-    public PlayerContext getContext() {
+    public PlayerInfo getContext() {
         return context;
     }
 

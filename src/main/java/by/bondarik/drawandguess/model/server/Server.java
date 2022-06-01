@@ -3,7 +3,7 @@ package by.bondarik.drawandguess.model.server;
 import by.bondarik.drawandguess.model.dao.PlayerContextDao;
 import by.bondarik.drawandguess.model.game.GameLogic;
 import by.bondarik.drawandguess.model.game.Player;
-import by.bondarik.drawandguess.model.game.PlayerContext;
+import by.bondarik.drawandguess.model.game.PlayerInfo;
 import by.bondarik.drawandguess.model.network.Message;
 import by.bondarik.drawandguess.model.network.MessageType;
 import by.bondarik.drawandguess.model.network.TCPConnection;
@@ -173,10 +173,10 @@ public class Server implements Closeable {
                             continue;
                         }
 
-                        PlayerContext context = PlayerContextDao.getContext(requestedPlayerName);
+                        PlayerInfo context = PlayerContextDao.getContext(requestedPlayerName);
 
                         if (context == null) {
-                            PlayerContext newContext = new PlayerContext(requestedPlayerName);
+                            PlayerInfo newContext = new PlayerInfo(requestedPlayerName);
                             PlayerContextDao.add(newContext);
 
                             connection.send(new Message(MessageType.LOGIN_SUCCESS, requestedPlayerName));

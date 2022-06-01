@@ -7,7 +7,7 @@ import java.util.Objects;
 
 import static org.junit.Assert.assertEquals;
 
-public class PlayerContextDaoTest {
+public class PlayerInfoDaoTest {
 
     @Test
     public void readingFile() {

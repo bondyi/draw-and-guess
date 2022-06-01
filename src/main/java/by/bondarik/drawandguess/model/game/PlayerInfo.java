@@ -1,15 +1,15 @@
 package by.bondarik.drawandguess.model.game;
 
-public class PlayerContext {
+public class PlayerInfo {
     private final String name;
     private int totalScore;
 
-    public PlayerContext(String name) {
+    public PlayerInfo(String name) {
         this.name = name;
         this.totalScore = 0;
     }
 
-    public PlayerContext(String name, int totalScore) {
+    public PlayerInfo(String name, int totalScore) {
         this.name = name;
         this.totalScore = totalScore;
     }
@@ -31,7 +31,7 @@ public class PlayerContext {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
 
-        PlayerContext that = (PlayerContext) o;
+        PlayerInfo that = (PlayerInfo) o;
 
         if (totalScore != that.totalScore) return false;
         return name.equals(that.name);

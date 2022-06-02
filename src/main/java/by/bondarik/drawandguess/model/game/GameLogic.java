@@ -1,8 +1,10 @@
 package by.bondarik.drawandguess.model.game;
 
+import by.bondarik.drawandguess.model.dao.PlayerInfoDao;
 import by.bondarik.drawandguess.model.dao.WordDao;
 import by.bondarik.drawandguess.model.network.MessageType;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -44,10 +46,10 @@ public class GameLogic {
         return players;
     }
 
-    public boolean isPlaying(PlayerInfo context) {
+    public boolean isPlaying(PlayerInfo info) {
         for (Player player : players) {
-            PlayerInfo currentContext = player.getContext();
-            if (Objects.equals(currentContext.getName(), context.getName())) {
+            PlayerInfo currentContext = player.getInfo();
+            if (Objects.equals(currentContext.getName(), info.getName())) {
                 return true;
             }
         }
@@ -145,5 +147,9 @@ public class GameLogic {
         for (Player player : playersGuessedCorrect) {
             player.addScore(playersGuessedCorrect.indexOf(player) + 1);
         }
+    }
+
+    public void saveScore(Player player) throws IOException {
+        PlayerInfoDao.savePlayer(player.getInfo());
     }
 }

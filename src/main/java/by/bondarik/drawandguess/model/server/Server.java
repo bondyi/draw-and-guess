@@ -17,7 +17,6 @@ import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.stream.Collectors;
 
 public class Server implements Closeable {
@@ -67,24 +66,6 @@ public class Server implements Closeable {
         }
     }
 
-    private void newRound(boolean isFirst) throws IOException {
-        Player newDrawer = gameLogic.newRound(isFirst);
-
-        for (ServerThread thread : threads) {
-            if (thread.player.equals(newDrawer)) {
-                thread.connection.send(new Message(MessageType.GAME_STATE, "DRAWING-" + gameLogic.getCurrentWord()));
-            }
-            else if (thread.player.isGuessing()) {
-                thread.connection.send(new Message(MessageType.GAME_STATE, "GUESSING"));
-            }
-        }
-
-        broadcastMessage(new Message(MessageType.CHAT, newDrawer.getContext().getName() + " is drawing"));
-        drawingPoints.clear();
-
-        view.appendMessage("[GAME] NEW ROUND. WORD: " + gameLogic.getCurrentWord());
-    }
-
     protected void broadcastMessage(Message message) throws IOException {
         for (ServerThread thread : threads) {
             thread.getConnection().send(message);
@@ -128,20 +109,20 @@ public class Server implements Closeable {
                             continue;
                         }
 
-                        PlayerInfo context = PlayerInfoDao.getContext(requestedPlayerName);
+                        PlayerInfo info = PlayerInfoDao.getInfo(requestedPlayerName);
 
-                        if (context == null) {
-                            PlayerInfo newContext = new PlayerInfo(requestedPlayerName);
-                            PlayerInfoDao.add(newContext);
+                        if (info == null) {
+                            PlayerInfo newInfo = new PlayerInfo(requestedPlayerName);
+                            PlayerInfoDao.add(newInfo);
 
                             connection.send(new Message(MessageType.LOGIN_SUCCESS, requestedPlayerName));
                             broadcastMessage(new Message(MessageType.CHAT, requestedPlayerName + " connected for the first time!"));
-                            return new Player(newContext);
+                            return new Player(newInfo);
                         }
-                        else if (!gameLogic.isPlaying(context)) {
+                        else if (!gameLogic.isPlaying(info)) {
                             connection.send(new Message(MessageType.LOGIN_SUCCESS, requestedPlayerName));
                             broadcastMessage(new Message(MessageType.CHAT, requestedPlayerName + " connected."));
-                            return new Player(context);
+                            return new Player(info);
                         }
                         else {
                             connection.send(new Message(MessageType.NAME_IS_USING));
@@ -162,7 +143,7 @@ public class Server implements Closeable {
                     Message message = connection.receive();
 
                     switch (message.getMessageType()) {
-                        case CHAT -> broadcastMessage(new Message(MessageType.CHAT, player.getContext().getName() + ": " + message.getData()));
+                        case CHAT -> broadcastMessage(new Message(MessageType.CHAT, player.getInfo().getName() + ": " + message.getData()));
 
                         case GUESS -> {
                             if (gameLogic.isIllegal(player, MessageType.GUESS)) {
@@ -171,13 +152,13 @@ public class Server implements Closeable {
                             }
 
                             if (gameLogic.guessWord(player, message.getData())) {
-                                broadcastMessage(new Message(MessageType.CHAT, player.getContext().getName() + " guessed the word!"));
+                                broadcastMessage(new Message(MessageType.CHAT, player.getInfo().getName() + " guessed the word!"));
                                 if (gameLogic.isRoundFinished()) {
                                     if (finishRound()) {
                                         newRound(false);
                                     }
                                 } else sendCorrectGameState(false);
-                            } else broadcastMessage(new Message(MessageType.CHAT, player.getContext().getName() + ": " + message.getData()));
+                            } else broadcastMessage(new Message(MessageType.CHAT, player.getInfo().getName() + ": " + message.getData()));
                         }
 
                         case POINT -> {
@@ -195,7 +176,8 @@ public class Server implements Closeable {
                             view.appendMessage("[DISCONNECT] CLIENT DISCONNECTED FROM " + connection);
 
                             if (player != null) {
-                                broadcastMessage(new Message(MessageType.CHAT, player.getContext().getName() + " disconnected."));
+                                gameLogic.saveScore(player);
+                                broadcastMessage(new Message(MessageType.CHAT, player.getInfo().getName() + " disconnected."));
                                 threads.remove(this);
                                 gameLogic.removePlayer(player);
                                 broadcastScores();
@@ -221,22 +203,22 @@ public class Server implements Closeable {
             }
         }
 
-        @Override
-        public void run() {
-            view.appendMessage("[CONNECT] CLIENT CONNECTED FROM " + connection);
-            player = login();
-            if (player != null) {
-                try {
-                    if (gameLogic.addPlayer(player)) newRound(true);
-                    else sendCorrectGameState(true);
+        private void newRound(boolean isFirst) throws IOException {
+            Player newDrawer = gameLogic.newRound(isFirst);
 
-                    broadcastScores();
-                } catch (IOException e) {
-                    view.appendMessage("[ERROR] PLAYER ADD FROM " + connection);
+            for (ServerThread thread : threads) {
+                if (thread.player.equals(newDrawer)) {
+                    thread.connection.send(new Message(MessageType.GAME_STATE, "DRAWING-" + gameLogic.getCurrentWord()));
+                }
+                else if (thread.player.isGuessing()) {
+                    thread.connection.send(new Message(MessageType.GAME_STATE, "GUESSING"));
                 }
             }
 
-            communication();
+            broadcastMessage(new Message(MessageType.CHAT, newDrawer.getInfo().getName() + " is drawing"));
+            drawingPoints.clear();
+
+            view.appendMessage("[GAME] NEW ROUND. WORD: " + gameLogic.getCurrentWord());
         }
 
         private void sendCorrectGameState(boolean sendCanvas) throws IOException {
@@ -277,10 +259,28 @@ public class Server implements Closeable {
         private void broadcastScores() throws IOException {
             ArrayList<Player> sortedPlayers = new ArrayList<>(gameLogic.getPlayers());
             sortedPlayers.sort((p1, p2) -> p2.getCurrentScore() - p1.getCurrentScore());
-            String scores = sortedPlayers.stream().map(p -> p.getContext().getName() + ": " + p.getCurrentScore())
+            String scores = sortedPlayers.stream().map(p -> p.getInfo().getName() + ": " + p.getCurrentScore())
                     .collect(Collectors.joining(","));
 
             broadcastMessage(new Message(MessageType.SCORES, scores));
+        }
+
+        @Override
+        public void run() {
+            view.appendMessage("[CONNECT] CLIENT CONNECTED FROM " + connection);
+            player = login();
+            if (player != null) {
+                try {
+                    if (gameLogic.addPlayer(player)) newRound(true);
+                    else sendCorrectGameState(true);
+
+                    broadcastScores();
+                } catch (IOException e) {
+                    view.appendMessage("[ERROR] PLAYER ADD FROM " + connection);
+                }
+            }
+
+            communication();
         }
     }
 }

@@ -14,50 +14,62 @@ public class PlayerInfoDao {
 
     private PlayerInfoDao() {}
 
-    public static List<PlayerInfo> getContexts() {
-        ArrayList<PlayerInfo> contexts = new ArrayList<>();
+    public static List<PlayerInfo> getInfos() {
+        ArrayList<PlayerInfo> infos = new ArrayList<>();
 
-        String[] playerContexts = BaseDao.getData(PATH).split("\\r?\\n");
+        String[] playerInfos = BaseDao.getData(PATH).split("\\r?\\n");
+        if (Objects.equals(playerInfos[0], "")) return infos;
 
-        for (String playerContext : playerContexts) {
-            String[] currentContext = playerContext.split(" ");
-            contexts.add(new PlayerInfo(currentContext[0], Integer.parseInt(currentContext[1])));
+        for (String playerInfo : playerInfos) {
+            String[] currentInfo = playerInfo.split(" ");
+            infos.add(new PlayerInfo(currentInfo[0], Integer.parseInt(currentInfo[1])));
         }
 
-        return contexts.size() != 0 ? contexts : null;
+        return infos;
     }
 
-    public static PlayerInfo getContext(String playerName) {
-        ArrayList<PlayerInfo> contexts = (ArrayList<PlayerInfo>) getContexts();
+    public static PlayerInfo getInfo(String playerName) {
+        ArrayList<PlayerInfo> infos = new ArrayList<>(getInfos());
 
-        if (contexts != null) {
-            for (PlayerInfo context : contexts) {
-                if (Objects.equals(context.getName(), playerName)) return context;
-            }
+        for (PlayerInfo info : infos) {
+            if (Objects.equals(info.getName(), playerName)) return info;
         }
 
         return null;
     }
 
-    public static boolean add(PlayerInfo newContext) throws IOException {
-        ArrayList<PlayerInfo> contexts = (ArrayList<PlayerInfo>) getContexts();
+    public static boolean add(PlayerInfo newInfo) throws IOException {
+        ArrayList<PlayerInfo> infos = new ArrayList<>(getInfos());
 
-        if (contexts != null) {
-            for (PlayerInfo context : contexts) {
-                if (context.equals(newContext)) return false;
-            }
 
-            contexts.add(newContext);
-            saveData(contexts);
+        for (PlayerInfo info : infos) {
+            if (info.equals(newInfo)) return false;
         }
+
+        infos.add(newInfo);
+        saveData(infos);
 
         return true;
     }
 
+    public static void savePlayer(PlayerInfo playerInfo) throws IOException {
+        ArrayList<PlayerInfo> infos = new ArrayList<>(Objects.requireNonNull(getInfos()));
+
+        int size = infos.size();
+        for (int i = 0; i < size; i++) {
+            if (infos.get(i).getName().equals(playerInfo.getName())) {
+                infos.set(i, playerInfo);
+                break;
+            }
+        }
+
+        saveData(infos);
+    }
+
     public static void saveData(List<PlayerInfo> playerInfos) throws IOException {
         try (FileWriter fileWriter = new FileWriter(PATH, false)) {
-            for (PlayerInfo context : playerInfos) {
-                fileWriter.write(context.toString() + '\n');
+            for (PlayerInfo info : playerInfos) {
+                fileWriter.write(info.toString() + '\n');
             }
         }
     }

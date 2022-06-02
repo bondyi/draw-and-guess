@@ -23,7 +23,7 @@ public class Canvas extends JPanel {
         g.setColor(Color.BLACK);
 
         for (int i = 0; i < points.size() - 1; i++) {
-            g.drawLine(points.get(i).x, points.get(i).y, points.get(i + 1).x, points.get(i + 1).y);
+            g.drawLine(points.get(i).x, points.get(i).y, points.get(i).x, points.get(i).y);
         }
     }
 

@@ -4,16 +4,16 @@ public class Player {
     private static int idCounter = 1;
     private final int id;
 
-    private final PlayerInfo context;
+    private final PlayerInfo info;
 
     private boolean isGuessing;
     private boolean isDrawing;
 
     private int currentScore;
 
-    public Player(PlayerInfo context) {
+    public Player(PlayerInfo info) {
         this.id = idCounter++;
-        this.context = context;
+        this.info = info;
         this.isGuessing = false;
         this.isDrawing = false;
         this.currentScore = 0;
@@ -23,8 +23,8 @@ public class Player {
         return id;
     }
 
-    public PlayerInfo getContext() {
-        return context;
+    public PlayerInfo getInfo() {
+        return info;
     }
 
     public boolean isGuessing() {
@@ -45,7 +45,7 @@ public class Player {
 
     public void addScore(int score) {
         this.currentScore += score;
-        this.context.addScore(score);
+        this.info.addScore(score);
     }
 
     public int getCurrentScore() {
@@ -63,13 +63,13 @@ public class Player {
         if (isGuessing != player.isGuessing) return false;
         if (isDrawing != player.isDrawing) return false;
         if (currentScore != player.currentScore) return false;
-        return context.equals(player.context);
+        return info.equals(player.info);
     }
 
     @Override
     public int hashCode() {
         int result = id;
-        result = 31 * result + context.hashCode();
+        result = 31 * result + info.hashCode();
         result = 31 * result + (isGuessing ? 1 : 0);
         result = 31 * result + (isDrawing ? 1 : 0);
         result = 31 * result + currentScore;
@@ -78,6 +78,6 @@ public class Player {
 
     @Override
     public String toString() {
-        return context.getName() + ": " + currentScore + '(' + context.getTotalScore() + ')';
+        return info.getName() + ": " + currentScore + '(' + info.getTotalScore() + ')';
     }
 }

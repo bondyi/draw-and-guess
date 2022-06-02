@@ -11,6 +11,6 @@ public class PlayerInfoDaoTest {
 
     @Test
     public void readingFile() {
-        assertEquals(8, Objects.requireNonNull(PlayerInfoDao.getContext("Balakras")).getTotalScore());
+        assertEquals(8, Objects.requireNonNull(PlayerInfoDao.getInfo("Balakras")).getTotalScore());
     }
 }
